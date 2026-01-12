@@ -1,0 +1,130 @@
+<div class="weather-app">
+  <div class="header">
+    <h1>🌤️ Weather App</h1>
+    <p class="subtitle">Angular 21 - Signal-Based Two-Way Data Binding Demo</p>
+  </div>
+
+  <!-- Search Section with Two-Way Data Binding -->
+  <div class="search-section">
+    <div class="search-container">
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Enter city name..."
+        [value]="searchCity()"
+        (input)="onCityInput($event)"
+        (keyup.enter)="searchWeather()"
+      />
+      <button
+        class="search-button"
+        (click)="searchWeather()"
+        [disabled]="!searchCity() || isLoading()"
+      >
+        @if (isLoading()) {
+          <span class="spinner">⏳</span>
+        } @else {
+          <span>🔍 Search</span>
+        }
+      </button>
+    </div>
+
+    <!-- Live binding demonstration -->
+    <div class="binding-demo">
+      <small>
+        <strong>Two-Way Binding Demo:</strong> You typed:
+        <span class="typed-value">{{ searchCity() || '(nothing yet)' }}</span>
+      </small>
+    </div>
+  </div>
+
+  <!-- Quick Select Cities -->
+  <div class="quick-select">
+    <h3>Quick Select:</h3>
+    <div class="city-chips">
+      @for (city of getAvailableCities(); track city) {
+        <button
+          class="city-chip"
+          (click)="selectCity(city)"
+        >
+          {{ city }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Weather Display using @if and computed signals -->
+  @if (currentWeather(); as weather) {
+    <div class="weather-card" [class]="weatherConditionClass()">
+      <div class="weather-icon">{{ weather.icon }}</div>
+
+      <div class="weather-info">
+        <h2 class="city-name">{{ weather.city }}</h2>
+        <div class="condition">{{ weather.condition }}</div>
+
+        <div class="temperature-section">
+          <!-- Using computed signal for temperature conversion -->
+          <div class="temp-display">
+            <span class="temp-large">{{ weather.temperature }}°C</span>
+            <span class="temp-converted">{{ temperatureF() }}°F</span>
+          </div>
+        </div>
+
+        <!-- ✨ NEW Angular 21: @let directive for local template variables -->
+        <!-- Before Angular 21, you'd need to create component methods for these calculations -->
+        <!-- React equivalent: const humidityLevel = ... (just use const in JSX) -->
+        <div class="details-grid">
+          @let humidityLevel = weather.humidity > 70 ? 'High' : weather.humidity > 50 ? 'Medium' : 'Low';
+
+          <div class="detail-item">
+            <div class="detail-icon">💧</div>
+            <div class="detail-content">
+              <div class="detail-label">Humidity</div>
+              <div class="detail-value">{{ weather.humidity }}% ({{ humidityLevel }})</div>
+            </div>
+          </div>
+
+          @let windStrength = weather.windSpeed > 20 ? 'Strong' : weather.windSpeed > 10 ? 'Moderate' : 'Light';
+
+          <div class="detail-item">
+            <div class="detail-icon">💨</div>
+            <div class="detail-content">
+              <div class="detail-label">Wind Speed</div>
+              <div class="detail-value">{{ weather.windSpeed }} km/h ({{ windStrength }})</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Signal reactivity demonstration -->
+    <div class="signal-info">
+      <h4>🆕 NEW in Angular 21 (Nov 2025):</h4>
+      <ul>
+        <li>✨ <strong>&#64;let directive</strong> - Local template variables (see humidity/wind levels above)</li>
+        <li>✨ <strong>Incremental Hydration</strong> - Better SSR performance (not visible in demo)</li>
+        <li>✨ <strong>Event Replay</strong> - Captures clicks during page load</li>
+      </ul>
+
+      <h4>📦 Modern Angular Features (Pre-Angular 21):</h4>
+      <ul>
+        <li>🔵 <strong>Signals</strong> (v16) - Reactive state like React hooks but auto-tracks deps</li>
+        <li>🔵 <strong>Computed signals</strong> (v16) - Auto-updating derived values: {{ weather.temperature }}°C → {{ temperatureF() }}°F</li>
+        <li>🔵 <strong>&#64;if/&#64;for syntax</strong> (v17) - Modern control flow like React JSX</li>
+        <li>🔵 <strong>Standalone components</strong> (v14) - No NgModule needed, like React</li>
+      </ul>
+
+      <h4>🆚 React Comparison:</h4>
+      <ul>
+        <li>💚 Signals = useState + useMemo (but auto-tracks dependencies!)</li>
+        <li>💚 Two-way binding = value + onChange (but with shorthand syntax)</li>
+        <li>💚 &#64;if/&#64;for = JSX conditionals (just different syntax)</li>
+      </ul>
+    </div>
+  } @else {
+    <div class="empty-state">
+      <div class="empty-icon">🌍</div>
+      <h3>Search for a city to see weather</h3>
+      <p>Try: London, New York, Paris, Tokyo, Sydney, or Seattle</p>
+    </div>
+  }
+</div>

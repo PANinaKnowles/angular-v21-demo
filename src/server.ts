@@ -14,6 +14,20 @@ const browserDistFolder = resolve(serverDistFolder, '../browser');
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 
+// Development helper: remove or relax overly-strict CSP headers that some
+// prebundled server code injects (e.g. default-src 'none') which blocks
+// browser tooling like Chrome DevTools from connecting to /.well-known/*
+// during local demos. This runs before static file handling.
+app.use((req, res, next) => {
+  // If a stricter policy is already set by other middleware, remove it
+  // so the browser can connect to local dev endpoints. For production
+  // you should set a proper CSP via a secure server configuration.
+  res.removeHeader('Content-Security-Policy');
+  // Optionally set a permissive policy for local dev (uncomment to enable)
+  // res.setHeader('Content-Security-Policy', "default-src 'self' 'unsafe-inline' data: blob:; connect-src 'self' http: https: ws:;");
+  next();
+});
+
 /**
  * Example Express Rest API endpoints can be defined here.
  * Uncomment and define endpoints as necessary.
