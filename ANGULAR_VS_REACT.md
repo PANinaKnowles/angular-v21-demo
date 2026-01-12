@@ -110,7 +110,7 @@ temperatureF = computed(() => {
 // Use it
 console.log(this.temperatureF());     // Auto-updates when currentWeather changes
 
-// No dependency array needed! 🎉
+// No dependency array needed
 ```
 
 ### React 19 (useMemo)
@@ -124,7 +124,7 @@ const temperatureF = useMemo(() => {
 // Use it
 console.log(temperatureF);            // Auto-updates when currentWeather changes
 
-// If you forget the dependency array, you'll get stale data 😰
+// If you forget the dependency array, you'll get stale data 
 ```
 
 **Key Differences:**
