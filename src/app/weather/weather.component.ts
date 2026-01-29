@@ -1,6 +1,9 @@
 import { Component, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { CityService } from '../services/city.service';
+
 
 interface WeatherData {
   city: string;
@@ -22,6 +25,39 @@ interface WeatherData {
   styleUrls: ['./weather.component.scss']
 })
 export class WeatherComponent {
+  constructor(private http: HttpClient, private cityService: CityService) { }
+
+  private weatherCodeMap: Record<number, string> = {
+    0: 'Clear',
+    1: 'Mainly Clear',
+    2: 'Partly Cloudy',
+    3: 'Cloudy',
+    45: 'Fog',
+    48: 'Rime Fog',
+    51: 'Light Drizzle',
+    53: 'Drizzle',
+    61: 'Rainy',
+    63: 'Heavy Rain',
+    71: 'Snow',
+    80: 'Rain Showers'
+  };
+
+  private weatherIconMap: Record<number, string> = {
+    0: '☀️',
+    1: '🌤️',
+    2: '⛅',
+    3: '☁️',
+    45: '🌫️',
+    48: '🌫️',
+    51: '🌦️',
+    61: '🌧️',
+    71: '❄️',
+    80: '🌧️'
+  };
+
+  ngOnInit() {
+    this.cityService.load();
+  }
   // ===== SIGNALS (Angular 16+, NOT new in 21) =====
   // Like React's useState, but auto-tracks dependencies
   // React equivalent: const [searchCity, setSearchCity] = useState('')
@@ -39,7 +75,7 @@ export class WeatherComponent {
   temperatureF = computed(() => {
     const weather = this.currentWeather();
     if (!weather) return null;
-    return Math.round((weather.temperature * 9/5) + 32);
+    return Math.round((weather.temperature * 9 / 5) + 32);
   });
 
   // Another computed signal for dynamic CSS classes
@@ -48,6 +84,45 @@ export class WeatherComponent {
     if (!weather) return '';
     return weather.condition.toLowerCase().replace(/\s+/g, '-');
   });
+
+  searchWeather() {
+    console.log("Searching");
+    const city = this.searchCity().toLowerCase().trim();
+    if (!city) return;
+
+    const coords = this.cityService.getCoordinates(city);
+    if (!coords) return;
+
+    this.isLoading.set(true);
+
+    const url =
+      `https://api.open-meteo.com/v1/forecast` +
+      `?latitude=${coords.lat}` +
+      `&longitude=${coords.lon}` +
+      `&current_weather=true`;
+
+    this.http.get<any>(url).subscribe({
+      next: (res) => {
+        console.log(res);
+        const current = res.current_weather;
+
+        this.currentWeather.set({
+          city: this.searchCity(),
+          temperature: current.temperature,
+          condition:
+            this.weatherCodeMap[current.weathercode] ?? 'Unknown',
+          humidity: 0,
+          windSpeed: current.windspeed,
+          icon: '🌍'
+        });
+
+        this.isLoading.set(false);
+      },
+      error: () => {console.log("error"); this.isLoading.set(false)}
+    });
+
+
+  }
 
   // Mock weather database
   private weatherDatabase: { [key: string]: WeatherData } = {
@@ -100,37 +175,6 @@ export class WeatherComponent {
       icon: '🌧️'
     }
   };
-
-  // Search for weather using two-way bound signal
-  searchWeather() {
-    const city = this.searchCity().toLowerCase().trim();
-
-    if (!city) {
-      return;
-    }
-
-    // Simulate API call with loading state
-    this.isLoading.set(true);
-
-    setTimeout(() => {
-      const weather = this.weatherDatabase[city];
-
-      if (weather) {
-        this.currentWeather.set(weather);
-      } else {
-        this.currentWeather.set({
-          city: this.searchCity(),
-          temperature: Math.floor(Math.random() * 30) + 10,
-          condition: 'Unknown',
-          humidity: Math.floor(Math.random() * 40) + 40,
-          windSpeed: Math.floor(Math.random() * 20) + 5,
-          icon: '🌍'
-        });
-      }
-
-      this.isLoading.set(false);
-    }, 800);
-  }
 
   // Update search city (demonstrates two-way binding)
   onCityInput(event: Event) {
